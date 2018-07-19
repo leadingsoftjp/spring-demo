@@ -1,0 +1,40 @@
+def label = "jenkins-slave-dev-${UUID.randomUUID().toString()}"
+podTemplate(label: label,
+containers: [
+  containerTemplate(name: 'maven', image: 'maven:3.5.4-jdk-8-alpine', command: 'cat', ttyEnabled: true),
+],
+volumes: [
+]) {
+  node(label) {
+    def myRepo = checkout scm
+    def curStage = ""
+
+    try {
+      stage('Build') {
+        curStage = "Build"
+        container('maven') {
+          sh 'mvn -B -DskipTests clean package'
+        }
+      }
+      stage('Test') {
+        curStage = "Test"
+        container('maven') {
+          sh "mvn -Dspring.profiles.active=ut test"
+          junit 'target/surefire-reports/*.xml'
+        }
+      }
+      stage ('Analysis') {
+        curStage = "Analysis"
+        container('maven') {
+          jacoco pattern: '**/jacoco.exec'
+          sh "mvn -batch-mode -V -U -e checkstyle:checkstyle findbugs:findbugs"
+          archiveArtifacts 'target/checkstyle-result.xml'
+          checkstyle pattern: 'target/checkstyle-result.xml'
+          findbugs pattern: 'target/site/findbugsXml.xml'
+        }
+      }
+    } catch (err) {
+      throw err
+    }
+  }
+}

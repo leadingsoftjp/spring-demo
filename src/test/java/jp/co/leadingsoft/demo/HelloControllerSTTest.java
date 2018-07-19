@@ -8,20 +8,29 @@ import java.util.concurrent.TimeUnit;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit4.SpringRunner;
 
-public class HelloControllerST {
+@RunWith(SpringRunner.class)
+@SpringBootTest
+public class HelloControllerSTTest {
 
 	private WebDriver driver;
+
+	@Value("${selenium.hub.url}")
+	private String seleniumUrl;
 
 	@Before
 	public void setUp() throws Exception {
 		DesiredCapabilities abilities = DesiredCapabilities.chrome();
 		abilities.setCapability("name", "Testing Selenium Remote WebDriver");
 
-		driver = new RemoteWebDriver(new URL("http://key:secret@selenium-hub.aws.leadingsoft.net/wd/hub"), abilities);
+		driver = new RemoteWebDriver(new URL(seleniumUrl), abilities);
 		driver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
 	}
 
